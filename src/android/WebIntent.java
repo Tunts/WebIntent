@@ -2,6 +2,7 @@ package net.tunts.webintent;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ArrayList;
 
 import org.apache.cordova.CordovaActivity;
 import org.json.JSONArray;
@@ -12,6 +13,7 @@ import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
 import android.text.Html;
+import android.util.Log;
 
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.PluginResult;
@@ -29,6 +31,7 @@ import org.apache.cordova.CallbackContext;
 public class WebIntent extends CordovaPlugin {
 
     private CallbackContext onNewIntentCallback = null;
+    private Intent newestIntent;
 
     /**
      * Executes the request and returns PluginResult.
@@ -89,7 +92,7 @@ public class WebIntent extends CordovaPlugin {
                     callbackContext.sendPluginResult(res);
                     return false;
                 }
-                Intent i = ((CordovaActivity) this.cordova.getActivity()).getIntent();
+                Intent i = getIntent();
                 String extraName = args.getString(0);
                 PluginResult res = new PluginResult(PluginResult.Status.OK, i.hasExtra(extraName));
                 callbackContext.sendPluginResult(res);
@@ -101,15 +104,39 @@ public class WebIntent extends CordovaPlugin {
                     callbackContext.sendPluginResult(res);
                     return false;
                 }
-                Intent i = ((CordovaActivity) this.cordova.getActivity()).getIntent();
+                Intent i = getIntent();
                 String extraName = args.getString(0);
 
                 if (i.hasExtra(extraName)) {
-                    PluginResult res = new PluginResult(PluginResult.Status.OK, i.hasExtra(extraName));
-                    callbackContext.sendPluginResult(res);
-                    return true;
+                    String r = i.getStringExtra(extraName);
+                    if (null == r) {
+                        Uri uri = ((Uri) i.getParcelableExtra(extraName));
 
+                        if(uri != null) {
+                            r = uri.toString();
+                        }
+
+                        Log.d("CORDOVA", "GetExtra");
+
+                        if(null == r) {
+                            ArrayList<Uri> list = i.getParcelableArrayListExtra(extraName);
+
+                            JSONArray arr = new JSONArray();
+                            for(Uri u : list) {
+                                arr.put(u.toString());
+                            }
+
+                            callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, arr));
+                            return true;
+                        }
+                    }
+
+                    callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, r));
+                    return true;
                 } else {
+
+                    Log.d("CORDOVA", "Does not have extra.");
+
                     PluginResult res = new PluginResult(PluginResult.Status.ERROR);
                     callbackContext.sendPluginResult(res);
                     return false;
@@ -122,7 +149,7 @@ public class WebIntent extends CordovaPlugin {
                     return false;
                 }
 
-                Intent i = ((CordovaActivity) this.cordova.getActivity()).getIntent();
+                Intent i = getIntent();
                 String uri = i.getDataString();
 
                 callbackContext.success(uri);
@@ -183,9 +210,18 @@ public class WebIntent extends CordovaPlugin {
 
     @Override
     public void onNewIntent(Intent intent) {
+        this.newestIntent = intent;
         if (this.onNewIntentCallback != null) {
             this.onNewIntentCallback.success(intent.getDataString());
         }
+    }
+
+    Intent getIntent() {
+        if(this.newestIntent != null) {
+            return this.newestIntent;
+        }
+
+        return ((CordovaActivity) this.cordova.getActivity()).getIntent();
     }
 
     void startActivity(String action, Uri uri, String type, Map<String, String> extras, Map<String, String> handlerMap) {
