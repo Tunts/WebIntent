@@ -1,0 +1,15 @@
+{
+  "name": "phonegap-webintent",
+  "version": "0.0.2",
+  "description": "WebIntents plugin for Phonegap from Boris Smus",
+  "main": "www/webintent.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Tunts/WebIntent"
+  },
+  "author": "Tuntscorp & Boris Smus",
+  "license": "MIT"
+}
